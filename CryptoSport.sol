@@ -1,17 +1,14 @@
 pragma solidity ^0.4.18;
 
 /*
-VERSION 02/02/2018
+VERSION DATE: 08/02/2018
+CREATED BY: CRYPTO SPORTZ
+UNJOY YOUR TEAM AND SPORTS AND EMAIL US IF YOU HAVE ANY QUESTIONS
 */
-
-//import "github.com/oraclize/ethereum-api/oraclizeAPI_0.5.sol"";
 
 /****************************************
 
- если проблема в заливкой, то можно убрать ввод address и вбить статично
-
 *****************************************/
-
 
 
 contract owned 
@@ -94,19 +91,16 @@ contract usingOraclize {
 	{
         if (getCodeSize(0x1d3B2638a7cC9f2CB3D298A3DA7a90B67E5506ed)>0){ //mainnet
             OAR = OraclizeAddrResolverI(0x1d3B2638a7cC9f2CB3D298A3DA7a90B67E5506ed);
-//            oraclize_setNetworkName("eth_mainnet");
             return true;
         }
 
         if (getCodeSize(0xc03A2615D5efaf5F49F60B7BB6583eaec212fdf1)>0){ //ropsten testnet
             OAR = OraclizeAddrResolverI(0xc03A2615D5efaf5F49F60B7BB6583eaec212fdf1);
-//            oraclize_setNetworkName("eth_ropsten3");
             return true;
         }
 
         return false;
     }
-
 
     function __callback(bytes32 myid, string result) public {
         __callback(myid, result, new bytes(0));
@@ -117,32 +111,29 @@ contract usingOraclize {
       myid; result; proof; // Silence compiler warnings
     }
 
-	/*
-    function oraclize_getPrice(string datasource) oraclizeAPI internal returns (uint){
-        return oraclize.getPrice(datasource);
-    }
-
-    function oraclize_getPrice(string datasource, uint gaslimit) oraclizeAPI internal returns (uint){
-        return oraclize.getPrice(datasource, gaslimit);
-    }
-	*/
-
     function oraclize_query(string datasource, string arg) oraclizeAPI internal returns (bytes32 id){
         uint price = oraclize.getPrice(datasource);
         if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
         return oraclize.query.value(price)(0, datasource, arg);
     }
 	
+	function oraclize_query(string datasource, string arg, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource, gaslimit);
+        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
+        return oraclize.query_withGasLimit.value(price)(0, datasource, arg, gaslimit);
+    }
 
+	function oraclize_getPrice(string datasource) oraclizeAPI internal returns (uint){
+        return oraclize.getPrice(datasource);
+    }
+
+    function oraclize_getPrice(string datasource, uint gaslimit) oraclizeAPI internal returns (uint){
+        return oraclize.getPrice(datasource, gaslimit);
+    }
+	
     function oraclize_cbAddress() oraclizeAPI internal returns (address){
         return oraclize.cbAddress();
     }
-
-	/*
-    function oraclize_randomDS_getSessionPubKeyHash() oraclizeAPI internal returns (bytes32){
-        return oraclize.randomDS_getSessionPubKeyHash();
-    }
-	*/
 
     function getCodeSize(address _addr) constant internal returns(uint _size) {
         assembly {
@@ -175,16 +166,6 @@ contract usingOraclize {
         return mint;
     }
 
-/*
-    string oraclize_network_name;
-    function oraclize_setNetworkName(string _network_name) internal {
-        oraclize_network_name = _network_name;
-    }
-
-    function oraclize_getNetworkName() internal view returns (string) {
-        return oraclize_network_name;
-    }
-*/
 }
 
 // </ORACLIZE_API>
@@ -220,8 +201,9 @@ contract SimpleLottery is ERC721, usingOraclize
 	{
         uint256 price;			// цена токена
 		uint256 combination;	// ставка
+        uint256 payment;		// сумма выплаты (выигрыш или отмена лотереи)
+		uint256 dateBuy;		// врем€ покупки
 		bool payout;			// выплачен
-        uint256 payment;		// сумма выплаты (выиграш или отмена лотерии)
 	}
 	Token[] public tokens;
 	
@@ -325,6 +307,7 @@ contract SimpleLottery is ERC721, usingOraclize
 			uint256 combination, 
 			bool payout,
 			uint256 payment, 
+			uint256 dateBuy,
 			address owner 
 	){
         Token storage tkn = tokens[_id];
@@ -332,6 +315,7 @@ contract SimpleLottery is ERC721, usingOraclize
 		combination = tkn.combination;
 		payout = tkn.payout;
 		payment = tkn.payment;
+		dateBuy = tkn.dateBuy;
 		if (desc.winCombination==combination) payment = desc.betsSumIn * tkn.price / betsAll[desc.winCombination].sum;
 		if (status == Status.CANCELING) payment = tkn.price;
 		
@@ -380,8 +364,18 @@ contract SimpleLottery is ERC721, usingOraclize
 			if (user == tokenIndexToOwner[i]) res = strConcat( res, uint2str(i), true );
 		}
     }
-	
-	
+	/*
+	function getWinTokens() public view returns ( string res ) 
+	{
+		res="";
+		require(desc.winCombination!=0);
+		for (uint256 i = 0; i < tokens.length; i++) 
+		{
+			Token storage tkn = tokens[i];
+			if (desc.winCombination==tkn.combination) res = strConcat( res, uint2str(i), true );
+		}
+    }
+	*/
 	
 	enum Status 
 	{
@@ -391,51 +385,48 @@ contract SimpleLottery is ERC721, usingOraclize
         PAYING,	 		//3 выдача выигрыша
 		CANCELING		//4 аннулирование игры
     }
-
-	
-	uint256 private constant WEI = 10**18;
-	uint256 private constant PELLER = 1 * WEI / 1000;
-
 	
 	struct Description {
-		string  nameLottery;			// название
+		string  nameLottery;			// название игры
 		uint256 countCombinations;		// количество комбинаций ставок в игре
 		uint256 maxCountStakePerComb;	// максимальное количество ставок на каждую комбинацию
-		uint256 dateStopBuy;
-		uint256 minStake;				// 0.001 эфира
-		uint256 fee;					// %
+		uint256 dateStopBuy;			// стоп продаж
+		uint256 minStake;				// минимальная ставка
+		uint256 fee;					// %комисси€ за пользование контрактом
 		uint256 betsSumIn;				// сумма всех поставленных ставок всех комбинаций
-		uint256 betsSumOut;				// сумма розданных ставок
+		uint256 betsSumOut;				// сумма розданных призов
 		uint256 winCombination;			// выигрышная комбинация
+		uint256 lotteryID;				// идентификатор игры дл€ Oraclize
 	}
 	
 	Status private status;
 	Description public desc;
 	
 	struct Stake {
-		uint256 sum;		// сумма комбинации
+		uint256 sum;		// поставленная сумма на данную комбинацию всех игроков
 		uint256 count;		// кол-во ставок данной комбинации
 	}
 	mapping(uint256 => Stake) public betsAll;	// комбинация_ставки->[сумма_ставки,кол-во]
 
+	uint256 private constant ORACLIZE_GAS_LIMIT = 200000;
 	
-	event LogInitGame( string _nameLottery, address gameaddress );
+	event LogInitGame( string _nameLottery, address gameaddress,  uint256 lotteryId );
 	event LogBuyToken(address user, uint256 combination, uint256 userStake, uint256 tokenId);
 	event LogSendMoney(string what, address user, uint256 value);
-	event LogResolveLottery( uint256 winCombination );
-	event LogOraclize( string msg, string value );
+	event LogResolveLottery( string what, uint256 winCombination );
+	event LogOraclize( string msg, uint256 value );
 	
-
 	address public owner;
-	address public admin;
+	address public ownerReserve;
+	address public feeAddress;
 
 	modifier onlyOwner {
-        require(msg.sender == owner);
+        require(msg.sender == owner || msg.sender == ownerReserve);
         _;
     }
 	
 	modifier onlyPlayer {
-        require(msg.sender != owner);
+        require(msg.sender != owner && msg.sender != ownerReserve);
         _;
     }
 
@@ -446,47 +437,42 @@ contract SimpleLottery is ERC721, usingOraclize
         return tmp;
 	}
 	
-	function SimpleLottery(address _owner) public 
+	function SimpleLottery() public 
 	{ 
-	/*
-		require( _owner != 0x0 );
-		owner=_owner;
-		status = Status.CREATING;
-		*/
-		admin = 0x230c9a8f235d88bbc8f9b589e17b4a4adbb286fc;
-		if (_owner==0x0) owner = 0xaC5c6E5aCc19C23EE9f09cdD8F091e298d6C4931;
-			else owner=_owner;
+		owner 		 = msg.sender;
+		ownerReserve = 0x0d8c9D5FB5301Ce26D67e2A7B345580A89917742;
+		feeAddress   = 0x230C9a8F235d88bbc8f9b589E17B4A4aDbB286FC;
+
 		status = Status.CREATING;
 	}
 
-	function initLottery( string _nameLottery, uint256 _countCombinations, 
-						  uint256 _maxCountStakePerComb, uint256 _dateStopBuy
+	function initLottery( 	string _nameLottery, uint256 _dateStopBuy,
+							uint256 _countCombinations, uint256 _maxCountStakePerCombination,
+							uint256 _minStakeFinney
 						) onlyOwner public {
 
 		require( status == Status.CREATING );
-						
-		// проверить вводимые параметры на не 0
+
 		require( _countCombinations > 0 );
-		require( _maxCountStakePerComb > 0 );
+		require( _maxCountStakePerCombination > 0 );
 		require( _dateStopBuy > timenow() );
-		
+
 		desc.nameLottery = _nameLottery;
 		desc.countCombinations = _countCombinations;
-		desc.maxCountStakePerComb = _maxCountStakePerComb;
+		desc.maxCountStakePerComb = _maxCountStakePerCombination;
 		desc.dateStopBuy = _dateStopBuy;
+		desc.lotteryID = block.number;
 		
 		desc.betsSumIn = 0;
 		desc.betsSumOut = 0;
 		desc.winCombination = 0;
 		
-		desc.minStake 	= PELLER;
+		desc.minStake 	= _minStakeFinney * 1 finney;
 		desc.fee		= 4;
+		
 		status = Status.PLAYING;
 		
-		// временные переменные:
-		// desc.dateStopBuy = timenow() + 24*60*60;				// 1 день
-
-		LogInitGame( _nameLottery, this );
+		LogInitGame( _nameLottery, this, desc.lotteryID );
 	}
 	
 	function timenow() public view returns(uint256) { return block.timestamp; }
@@ -494,15 +480,8 @@ contract SimpleLottery is ERC721, usingOraclize
 //	function unfreezeLottery() public onlyOwner { isFreezing = false; }
 	function () payable public { require (msg.value == 0x0); }
 	
-	/*
-	// временнная функция 
-	function updateTime(uint256 _dateStopBuy) onlyOwner public
-	{
-		desc.dateStopBuy = _dateStopBuy;
-	}
-	*/
-	
-	function buyToken(uint256 combination, address captainAddress) payable onlyPlayer public
+
+	function buyToken(uint256 combination, address captainAddress) payable public
 	{
 		require( status == Status.PLAYING );
 		require( timenow() < desc.dateStopBuy );
@@ -510,22 +489,18 @@ contract SimpleLottery is ERC721, usingOraclize
 		require( combination != 0 );
 		require( captainAddress != msg.sender );
 		
-		// проверить хватает ли денег на покупку
+		// проверить хватает ли денег на ставку
 		require( msg.value >= desc.minStake );
 		
 		// проверить не вышли за предел кол-ва ставок
 		require( betsAll[combination].count < desc.maxCountStakePerComb );
 		
 		uint256 userStake = msg.value;
-		uint256 feeValue = userStake * desc.fee / 100;
-		userStake = userStake - feeValue;
+		uint256 feeValue = userStake * desc.fee / 100;	// комиссия контракту
+		uint256 captainValue = userStake * 1 / 100;		// бонус капитану = 1%
 		
-		uint256 captainValue = 0;
-		if (captainAddress!=0x0)
-		{
-			captainValue = msg.value / 100;	// 1 %
-			userStake = userStake - captainValue;
-		}		
+		userStake = userStake - feeValue;
+		if (captainAddress!=0x0) userStake = userStake - captainValue;
 		
 		// увеличиваю сумму ставок
 		desc.betsSumIn = desc.betsSumIn + userStake;
@@ -538,7 +513,8 @@ contract SimpleLottery is ERC721, usingOraclize
 			price: userStake,
 			combination: combination,
 			payout : false,
-			payment : 0
+			payment : 0,
+			dateBuy : timenow()
 		});
 
 		uint256 newTokenId = tokens.push(_token) - 1;
@@ -547,17 +523,19 @@ contract SimpleLottery is ERC721, usingOraclize
 		LogBuyToken( msg.sender, combination, userStake, newTokenId );
 
 		// забираем комиссию
-		admin.transfer(feeValue); 
-		LogSendMoney( "FEECONTRACT", admin, feeValue );
+//		feeAddress.transfer(feeValue); 
+		assert(feeAddress.send(feeValue));
+		LogSendMoney( "FEECONTRACT", feeAddress, feeValue );
 		
 		// отправляем бонус
 		if (captainAddress!=0x0) 
 		{
-			captainAddress.transfer(captainValue);
+			assert(captainAddress.send(captainValue));
 			LogSendMoney( "CAPTAIN", captainAddress, captainValue );
 		}
 	}
 	
+	/*
 	// лотерея отменена - возврат стоимости билета
 	function returnToken(uint256 _tokenId) onlyPlayer public 
 	{
@@ -601,7 +579,32 @@ contract SimpleLottery is ERC721, usingOraclize
 		msg.sender.transfer(sumPayment); 
 		LogSendMoney( "PRIZE", msg.sender, sumPayment );
 	}
+	*/
 
+	// обналичивание токена
+	function redeemToken(uint256 _tokenId) public 
+	{
+		require( status == Status.PAYING || status == Status.CANCELING);
+
+		require( msg.sender == tokenIndexToOwner[_tokenId] );	// хозяин текущий
+		require( tokens[_tokenId].payout == false ); // еще не выплачен
+		require( tokens[_tokenId].combination == desc.winCombination || status == Status.CANCELING ); // Есть выигрышный токен		
+
+		uint256 sumPayment = 0;
+		if ( status == Status.CANCELING ) sumPayment = tokens[_tokenId].price;
+		if ( status == Status.PAYING ) sumPayment = desc.betsSumIn * tokens[_tokenId].price / betsAll[desc.winCombination].sum;
+
+		tokens[_tokenId].payout = true;
+		tokens[_tokenId].payment = sumPayment;
+	
+		desc.betsSumOut += sumPayment;
+		
+		// отправляю деньги владельцу токена
+//		msg.sender.transfer(sumPayment); 
+		assert(msg.sender.send(sumPayment));
+		
+		LogSendMoney( "REDEEMTOKEN", msg.sender, sumPayment );
+	}
 	
 	function emergencyCancelLottery() public 
 	{
@@ -616,56 +619,64 @@ contract SimpleLottery is ERC721, usingOraclize
 		status = Status.CANCELING;
 	}
 
-	function checkNobodyWin() private
-	{
-		// никто не выиграл 
-		if ( betsAll[desc.winCombination].count == 0 )
-		{
-			LogSendMoney( "NOBODYWIN", admin, this.balance );
-			admin.transfer(this.balance);
-		}
-	}
-	
-	function __callback(bytes32 , string _result) public
+	function __callback(bytes32, string _result) public
 	{
 		require( status == Status.PLAYING );
 		require( timenow() > desc.dateStopBuy );
         require (msg.sender == oraclize_cbAddress());
 
         desc.winCombination = parseInt(_result);
-		
-		status = Status.PAYING;
-		LogResolveLottery( desc.winCombination  );
-		
-		checkNobodyWin();
+		if ( desc.winCombination > desc.countCombinations ) desc.winCombination = 0;
+
+		LogResolveLottery( "Oraclize", desc.winCombination  );
     }
 
-    function resolveLotteryByOraclize( string key ) onlyOwner public payable
+    function resolveLotteryByOraclize() onlyOwner public payable
 	{
-        LogOraclize("Oraclize query was sent, waiting for the answer..", key );
+		uint oraclizeFee = oraclize_getPrice("URL", ORACLIZE_GAS_LIMIT );
+        require(oraclizeFee < msg.value);
 		
-		string memory tmp;
-		tmp = strConcat( "json(http://52.60.180.219/api/v1/game/", key, false );
-		tmp = strConcat( tmp, "/result).result", false );
+        LogOraclize("Oraclize query was sent, waiting for the answer..", desc.lotteryID );
+		
+		string memory tmpQuery;
+		tmpQuery = strConcat( "json(http://cryptosportz.com/api/v1/game/", uint2str(desc.lotteryID), false );
+		tmpQuery = strConcat( tmpQuery, "/result).result", false );
 	
-		oraclize_query("URL",tmp);
+		oraclize_query("URL", tmpQuery, ORACLIZE_GAS_LIMIT);
     }
 
 	function resolveLotteryByHand( uint256 combination ) onlyOwner public 
 	{
 		require( status == Status.PLAYING );
+		require( combination <= desc.countCombinations );
+		require( combination != 0 );
 		
-		// возможность запуска через сутки, если не получилось через Oraclize
-		require( timenow() > desc.dateStopBuy + 24*60*60 );
-		
+		// возможность запуска через час, если не получилось через Oraclize
+		require( timenow() > desc.dateStopBuy + 1*60*60 );
+
 		// решение лотереи
 		desc.winCombination = combination;
 		
+		LogResolveLottery( "Owner", desc.winCombination );
+	}
+	
+	function finalizeLottery() onlyOwner public 
+	{
+		require( timenow() > desc.dateStopBuy );
+		require( status == Status.PLAYING );
+		require( desc.winCombination != 0 );
+
 		status = Status.PAYING;
-		LogResolveLottery( desc.winCombination );
 		
-		checkNobodyWin();
-	}	
+		// никто не выиграл 
+		if ( betsAll[desc.winCombination].count == 0 )
+		{
+			LogSendMoney( "NOBODYWIN", feeAddress, this.balance );
+			desc.betsSumOut += this.balance;
+			//feeAddress.transfer(this.balance);
+			assert(feeAddress.send(this.balance));
+		}
+	}
 	
 }
 
@@ -678,7 +689,7 @@ contract Lotterres is owned
 	
 	function addGame() public onlyOwner 
 	{
-		games[countGames++] = new SimpleLottery(msg.sender);
+		games[countGames++] = new SimpleLottery();
 	}
 	
 }
