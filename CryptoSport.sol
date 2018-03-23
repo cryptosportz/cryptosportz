@@ -1,211 +1,144 @@
 pragma solidity ^0.4.18;
 
 /*
-VERSION DATE: 08/02/2018
+VERSION DATE: 23/03/2018
+
 CREATED BY: CRYPTO SPORTZ
 UNJOY YOUR TEAM AND SPORTS AND EMAIL US IF YOU HAVE ANY QUESTIONS
 */
 
-/****************************************
-
-*****************************************/
-
-
-contract owned 
-{
-    address public owner;
-    address public candidate;
-	
-    function owned() public {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function changeOwner(address newOwner) onlyOwner public {
-        candidate = newOwner;
-    }
-	
-	function confirmOwner() public {
-        require(candidate == msg.sender); // run by name=candidate
-		owner = candidate;
-    }
-}
-
-
-// <ORACLIZE_API>
-
 contract OraclizeI {
-    address public cbAddress;
-    function query(uint _timestamp, string _datasource, string _arg) external payable returns (bytes32 _id);
-    function query_withGasLimit(uint _timestamp, string _datasource, string _arg, uint _gaslimit) external payable returns (bytes32 _id);
-    function query2(uint _timestamp, string _datasource, string _arg1, string _arg2) public payable returns (bytes32 _id);
-    function query2_withGasLimit(uint _timestamp, string _datasource, string _arg1, string _arg2, uint _gaslimit) external payable returns (bytes32 _id);
-    function queryN(uint _timestamp, string _datasource, bytes _argN) public payable returns (bytes32 _id);
-    function queryN_withGasLimit(uint _timestamp, string _datasource, bytes _argN, uint _gaslimit) external payable returns (bytes32 _id);
-    function getPrice(string _datasource) public returns (uint _dsprice);
-    function getPrice(string _datasource, uint gaslimit) public returns (uint _dsprice);
-    function setProofType(byte _proofType) external;
-    function setCustomGasPrice(uint _gasPrice) external;
-    function randomDS_getSessionPubKeyHash() external constant returns(bytes32);
+	address public cbAddress;
+	function query(uint _timestamp, string _datasource, string _arg) external payable returns (bytes32 _id);
+	function query_withGasLimit(uint _timestamp, string _datasource, string _arg, uint _gaslimit) external payable returns (bytes32 _id);
+	function query2(uint _timestamp, string _datasource, string _arg1, string _arg2) public payable returns (bytes32 _id);
+	function query2_withGasLimit(uint _timestamp, string _datasource, string _arg1, string _arg2, uint _gaslimit) external payable returns (bytes32 _id);
+	function queryN(uint _timestamp, string _datasource, bytes _argN) public payable returns (bytes32 _id);
+	function queryN_withGasLimit(uint _timestamp, string _datasource, bytes _argN, uint _gaslimit) external payable returns (bytes32 _id);
+	function getPrice(string _datasource) public returns (uint _dsprice);
+	function getPrice(string _datasource, uint gaslimit) public returns (uint _dsprice);
+	function setProofType(byte _proofType) external;
+	function setCustomGasPrice(uint _gasPrice) external;
+	function randomDS_getSessionPubKeyHash() external constant returns(bytes32);
 }
 contract OraclizeAddrResolverI {
-    function getAddress() public returns (address _addr);
+	function getAddress() public returns (address _addr);
 }
 contract usingOraclize {
 	
-    uint8 constant networkID_auto = 0;
-    uint8 constant networkID_mainnet = 1;
-    uint8 constant networkID_testnet = 2;
-    uint8 constant networkID_morden = 2;
-    uint8 constant networkID_consensys = 161;
+	uint8 constant networkID_auto = 0;
+	uint8 constant networkID_mainnet = 1;
+	uint8 constant networkID_testnet = 2;
+	uint8 constant networkID_morden = 2;
+	uint8 constant networkID_consensys = 161;
 
-    OraclizeAddrResolverI OAR;
+	OraclizeAddrResolverI OAR;
 
-    OraclizeI oraclize;
-    modifier oraclizeAPI 
+	OraclizeI oraclize;
+	modifier oraclizeAPI 
 	{
-        if((address(OAR)==0)||(getCodeSize(address(OAR))==0))
-            oraclize_setNetwork(networkID_auto);
+		if((address(OAR)==0)||(getCodeSize(address(OAR))==0))
+			oraclize_setNetwork(networkID_auto);
 
-        if(address(oraclize) != OAR.getAddress())
-            oraclize = OraclizeI(OAR.getAddress());
+		if(address(oraclize) != OAR.getAddress())
+			oraclize = OraclizeI(OAR.getAddress());
 
-        _;
-    }
-    modifier coupon(string code){
-        oraclize = OraclizeI(OAR.getAddress());
-        _;
-    }
+		_;
+	}
+	modifier coupon(string code){
+		oraclize = OraclizeI(OAR.getAddress());
+		_;
+	}
 
-    function oraclize_setNetwork(uint8 networkID) internal returns(bool)
+	function oraclize_setNetwork(uint8 networkID) internal returns(bool)
 	{
 		return oraclize_setNetwork();
 		networkID; // silence the warning and remain backwards compatible
-    }
+	}
 	
-    function oraclize_setNetwork() internal returns(bool)
+	function oraclize_setNetwork() internal returns(bool)
 	{
-        if (getCodeSize(0x1d3B2638a7cC9f2CB3D298A3DA7a90B67E5506ed)>0){ //mainnet
-            OAR = OraclizeAddrResolverI(0x1d3B2638a7cC9f2CB3D298A3DA7a90B67E5506ed);
-            return true;
-        }
+		if (getCodeSize(0x1d3B2638a7cC9f2CB3D298A3DA7a90B67E5506ed)>0){ //mainnet
+			OAR = OraclizeAddrResolverI(0x1d3B2638a7cC9f2CB3D298A3DA7a90B67E5506ed);
+			return true;
+		}
 
-        if (getCodeSize(0xc03A2615D5efaf5F49F60B7BB6583eaec212fdf1)>0){ //ropsten testnet
-            OAR = OraclizeAddrResolverI(0xc03A2615D5efaf5F49F60B7BB6583eaec212fdf1);
-            return true;
-        }
+		if (getCodeSize(0xc03A2615D5efaf5F49F60B7BB6583eaec212fdf1)>0){ //ropsten testnet
+			OAR = OraclizeAddrResolverI(0xc03A2615D5efaf5F49F60B7BB6583eaec212fdf1);
+			return true;
+		}
 
-        return false;
-    }
-
-    function __callback(bytes32 myid, string result) public {
-        __callback(myid, result, new bytes(0));
-    }
-    
-    function __callback(bytes32 myid, string result, bytes proof) pure public {
-      return;
-      myid; result; proof; // Silence compiler warnings
-    }
-
-    function oraclize_query(string datasource, string arg) oraclizeAPI internal returns (bytes32 id){
-        uint price = oraclize.getPrice(datasource);
-        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
-        return oraclize.query.value(price)(0, datasource, arg);
-    }
+		return false;
+	}
 	
 	function oraclize_query(string datasource, string arg, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
+		uint price = oraclize.getPrice(datasource, gaslimit);
+		if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
+		return oraclize.query_withGasLimit.value(price)(0, datasource, arg, gaslimit);
+	}
+
+    function oraclize_query(uint timestamp, string datasource, string arg, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
         uint price = oraclize.getPrice(datasource, gaslimit);
         if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
-        return oraclize.query_withGasLimit.value(price)(0, datasource, arg, gaslimit);
-    }
-
+        return oraclize.query_withGasLimit.value(price)(timestamp, datasource, arg, gaslimit);
+	}
+	
 	function oraclize_getPrice(string datasource) oraclizeAPI internal returns (uint){
-        return oraclize.getPrice(datasource);
-    }
+		return oraclize.getPrice(datasource);
+	}
 
-    function oraclize_getPrice(string datasource, uint gaslimit) oraclizeAPI internal returns (uint){
-        return oraclize.getPrice(datasource, gaslimit);
+	function oraclize_getPrice(string datasource, uint gaslimit) oraclizeAPI internal returns (uint){
+		return oraclize.getPrice(datasource, gaslimit);
+	}
+
+    function oraclize_setCustomGasPrice(uint gasPrice) oraclizeAPI internal {
+        return oraclize.setCustomGasPrice(gasPrice);
     }
 	
-    function oraclize_cbAddress() oraclizeAPI internal returns (address){
-        return oraclize.cbAddress();
-    }
+	function oraclize_cbAddress() oraclizeAPI internal returns (address){
+		return oraclize.cbAddress();
+	}
 
-    function getCodeSize(address _addr) constant internal returns(uint _size) {
-        assembly {
-            _size := extcodesize(_addr)
-        }
-    }
-
-	
-    // parseInt
-    function parseInt(string _a) internal pure returns (uint) {
-        return parseInt(_a, 0);
-    }
-
-    // parseInt(parseFloat*10^_b)
-    function parseInt(string _a, uint _b) internal pure returns (uint) {
-        bytes memory bresult = bytes(_a);
-        uint mint = 0;
-        bool decimals = false;
-        for (uint i=0; i<bresult.length; i++){
-            if ((bresult[i] >= 48)&&(bresult[i] <= 57)){
-                if (decimals){
-                   if (_b == 0) break;
-                    else _b--;
-                }
-                mint *= 10;
-                mint += uint(bresult[i]) - 48;
-            } else if (bresult[i] == 46) decimals = true;
-        }
-        if (_b > 0) mint *= 10**_b;
-        return mint;
-    }
+	function getCodeSize(address _addr) constant internal returns(uint _size) {
+		assembly {
+			_size := extcodesize(_addr)
+		}
+	}
 
 }
 
-// </ORACLIZE_API>
-
-contract ERC721 
+contract ERC721Abstract
 {
-    function implementsERC721() public pure returns (bool);
-    function totalSupply() public view returns (uint256 total);
-    function balanceOf(address _owner) public view returns (uint256 balance);
-    function ownerOf(uint256 _tokenId) public view returns (address owner);
-    function approve(address _to, uint256 _tokenId) public;
-    function transferFrom(address _from, address _to, uint256 _tokenId) public;
-    function transfer(address _to, uint256 _tokenId) public;
+	function implementsERC721() public pure returns (bool);
+	function balanceOf(address _owner) public view returns (uint256 balance);
+	function ownerOf(uint256 _tokenId) public view returns (address owner);
+	function approve(address _to, uint256 _tokenId) public;
+	function transferFrom(address _from, address _to, uint256 _tokenId) public;
+	function transfer(address _to, uint256 _tokenId) public;
  
 	event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
-    event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
+	event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
 
-    // Optional
-    // function name() public view returns (string name);
-    // function symbol() public view returns (string symbol);
-    // function tokenOfOwnerByIndex(address _owner, uint256 _index) external view returns (uint256 tokenId);
-    // function tokenMetadata(uint256 _tokenId) public view returns (string infoUrl);
+	// Optional
+	// function totalSupply() public view returns (uint256 total);
+	// function name() public view returns (string name);
+	// function symbol() public view returns (string symbol);
+	// function tokenOfOwnerByIndex(address _owner, uint256 _index) external view returns (uint256 tokenId);
+	// function tokenMetadata(uint256 _tokenId) public view returns (string infoUrl);
 }
 
-
-contract SimpleLottery is ERC721, usingOraclize
+contract ERC721 is ERC721Abstract
 {
-// <ERC721>
-    string public name = "CryptoSport";
-    string public symbol = "CS";
-	
+	string constant public   name = "CryptoSport";
+	string constant public symbol = "CS";
+
+	uint256 public totalSupply;
 	struct Token
 	{
-        uint256 price;			// цена токена
-		uint256 combination;	// ставка
-        uint256 payment;		// сумма выплаты (выигрыш или отмена лотереи)
-		uint256 dateBuy;		// врем€ покупки
-		bool payout;			// выплачен
+		uint256 price;			//  value of stake
+		uint256	option;			//  [payout]96[idLottery]64[combination]32[dateBuy]0
 	}
-	Token[] public tokens;
+	mapping (uint256 => Token) tokens;
 	
 	// A mapping from tokens IDs to the address that owns them. All tokens have some valid owner address
 	mapping (uint256 => address) public tokenIndexToOwner;
@@ -214,482 +147,590 @@ contract SimpleLottery is ERC721, usingOraclize
 	mapping (address => uint256) ownershipTokenCount; 
 
 	// A mapping from tokenIDs to an address that has been approved to call transferFrom().
-    // Each token can only have one approved address for transfer at any time.
-    // A zero value means no approval is outstanding.
-    mapping (uint256 => address) public tokenIndexToApproved;
+	// Each token can only have one approved address for transfer at any time.
+	// A zero value means no approval is outstanding.
+	mapping (uint256 => address) public tokenIndexToApproved;
 	
 	function implementsERC721() public pure returns (bool)
-    {
-        return true;
-	}
-	
-    function totalSupply() public view returns (uint) 
 	{
-        return tokens.length;
-    }
+		return true;
+	}
 
 	function balanceOf(address _owner) public view returns (uint256 count) 
 	{
-        return ownershipTokenCount[_owner];
-    }
+		return ownershipTokenCount[_owner];
+	}
 	
 	function ownerOf(uint256 _tokenId) public view returns (address owner)
-    {
-        owner = tokenIndexToOwner[_tokenId];
-        require(owner != address(0));
-    }
+	{
+		owner = tokenIndexToOwner[_tokenId];
+		require(owner != address(0));
+	}
 	
 	// Marks an address as being approved for transferFrom(), overwriting any previous approval. 
-    // Setting _approved to address(0) clears all transfer approval.
-    function _approve(uint256 _tokenId, address _approved) internal 
+	// Setting _approved to address(0) clears all transfer approval.
+	function _approve(uint256 _tokenId, address _approved) internal 
 	{
-        tokenIndexToApproved[_tokenId] = _approved;
-    }
+		tokenIndexToApproved[_tokenId] = _approved;
+	}
 	
 	// Checks if a given address currently has transferApproval for a particular token.
-    // param _claimant the address we are confirming token is approved for.
-    // param _tokenId token id, only valid when > 0
+	// param _claimant the address we are confirming token is approved for.
+	// param _tokenId token id, only valid when > 0
 	function _approvedFor(address _claimant, uint256 _tokenId) internal view returns (bool) {
-        return tokenIndexToApproved[_tokenId] == _claimant;
-    }
+		return tokenIndexToApproved[_tokenId] == _claimant;
+	}
 	
 	function approve( address _to, uint256 _tokenId ) public
-    {
-        // Only an owner can grant transfer approval.
-        require(_owns(msg.sender, _tokenId));
+	{
+		// Only an owner can grant transfer approval.
+		require(_owns(msg.sender, _tokenId));
 
-        // Register the approval (replacing any previous approval).
-        _approve(_tokenId, _to);
+		// Register the approval (replacing any previous approval).
+		_approve(_tokenId, _to);
 
-        // Emit approval event.
-        Approval(msg.sender, _to, _tokenId);
-    }
+		// Emit approval event.
+		Approval(msg.sender, _to, _tokenId);
+	}
 	
 	function transferFrom( address _from, address _to, uint256 _tokenId ) public
-    {
-        // Check for approval and valid ownership
-        require(_approvedFor(msg.sender, _tokenId));
-        require(_owns(_from, _tokenId));
+	{
+		// Check for approval and valid ownership
+		require(_approvedFor(msg.sender, _tokenId));
+		require(_owns(_from, _tokenId));
 
-        // Reassign ownership (also clears pending approvals and emits Transfer event).
-        _transfer(_from, _to, _tokenId);
-    }
+		// Reassign ownership (also clears pending approvals and emits Transfer event).
+		_transfer(_from, _to, _tokenId);
+	}
 	
 	function _owns(address _claimant, uint256 _tokenId) internal view returns (bool) {
-        return tokenIndexToOwner[_tokenId] == _claimant;
-    }
+		return tokenIndexToOwner[_tokenId] == _claimant;
+	}
 	
-    function _transfer(address _from, address _to, uint256 _tokenId) internal 
+	function _transfer(address _from, address _to, uint256 _tokenId) internal 
 	{
-        ownershipTokenCount[_to]++;
-        tokenIndexToOwner[_tokenId] = _to;
+		ownershipTokenCount[_to]++;
+		tokenIndexToOwner[_tokenId] = _to;
 
-        if (_from != address(0)) 
+		if (_from != address(0)) 
 		{
+			Transfer(_from, _to, _tokenId);
 			ownershipTokenCount[_from]--;
 			// clear any previously approved ownership exchange
-            delete tokenIndexToApproved[_tokenId];
+			delete tokenIndexToApproved[_tokenId];
 		}
-		
-        Transfer(_from, _to, _tokenId);
+
+	}
+	
+	function transfer(address _to, uint256 _tokenId) public
+	{
+		require(_to != address(0));
+		require(_owns(msg.sender, _tokenId));
+		_transfer(msg.sender, _to, _tokenId);
+	}
+
+}
+
+contract Owned 
+{
+    address private candidate;
+	address public owner;
+
+	mapping(address => bool) public admins;
+	
+    function Owned() public 
+	{
+        owner = msg.sender;
+    }
+
+    function changeOwner(address newOwner) public 
+	{
+		require(msg.sender == owner);
+        candidate = newOwner;
     }
 	
-    function transfer( address _to, uint256 _tokenId ) public
-    {
-        require(_to != address(0));
-        require(_owns(msg.sender, _tokenId));
-        _transfer(msg.sender, _to, _tokenId);
+	function confirmOwner() public 
+	{
+        require(candidate == msg.sender); // run by name=candidate
+		owner = candidate;
     }
-// </ERC721>
+	
+    function addAdmin(address addr) external 
+	{
+		require(msg.sender == owner);
+        admins[addr] = true;
+    }
 
-	function getTokenByID(uint256 _id) public view returns ( 
-			uint256 price, 
-			uint256 combination, 
-			bool payout,
-			uint256 payment, 
-			uint256 dateBuy,
-			address owner 
-	){
-        Token storage tkn = tokens[_id];
-		price = tkn.price;
-		combination = tkn.combination;
-		payout = tkn.payout;
-		payment = tkn.payment;
-		dateBuy = tkn.dateBuy;
-		if (desc.winCombination==combination) payment = desc.betsSumIn * tkn.price / betsAll[desc.winCombination].sum;
-		if (status == Status.CANCELING) payment = tkn.price;
-		
-		owner = tokenIndexToOwner[_id];
+    function removeAdmin(address addr) external
+	{
+		require(msg.sender == owner);
+        admins[addr] = false;
     }
+}
+
+contract Functional
+{
+	// parseInt(parseFloat*10^_b)
+	function parseInt(string _a, uint _b) internal pure returns (uint) 
+	{
+		bytes memory bresult = bytes(_a);
+		uint mint = 0;
+		bool decimals = false;
+		for (uint i=0; i<bresult.length; i++){
+			if ((bresult[i] >= 48)&&(bresult[i] <= 57)){
+				if (decimals){
+				   if (_b == 0) break;
+					else _b--;
+				}
+				mint *= 10;
+				mint += uint(bresult[i]) - 48;
+			} else if (bresult[i] == 46) decimals = true;
+		}
+		if (_b > 0) mint *= 10**_b;
+		return mint;
+	}
 	
 	function uint2str(uint i) internal pure returns (string)
 	{
-        if (i == 0) return "0";
-        uint j = i;
-        uint len;
-        while (j != 0){
-            len++;
-            j /= 10;
-        }
-        bytes memory bstr = new bytes(len);
-        uint k = len - 1;
-        while (i != 0){
-            bstr[k--] = byte(48 + i % 10);
-            i /= 10;
-        }
-        return string(bstr);
-    }
+		if (i == 0) return "0";
+		uint j = i;
+		uint len;
+		while (j != 0){
+			len++;
+			j /= 10;
+		}
+		bytes memory bstr = new bytes(len);
+		uint k = len - 1;
+		while (i != 0){
+			bstr[k--] = byte(48 + i % 10);
+			i /= 10;
+		}
+		return string(bstr);
+	}
 	
-	function strConcat(string _a, string _b, bool comma) internal pure returns (string)
+	function strConcat(string _a, string _b, string _c) internal pure returns (string)
 	{
-        bytes memory _ba = bytes(_a);
-        bytes memory _bb = bytes(_b);
-		string memory ab;
-        if (_ba.length!=0 && comma) ab = new string(_ba.length + _bb.length + 1);
-							   else ab = new string(_ba.length + _bb.length);
-        bytes memory bab = bytes(ab);
-        uint k = 0;
-        for (uint i = 0; i < _ba.length; i++) bab[k++] = _ba[i];
-		if (_ba.length!=0 && comma) bab[k++] = ",";
-        for (i = 0; i < _bb.length; i++) bab[k++] = _bb[i];
-        return string(bab);
+		bytes memory _ba = bytes(_a);
+		bytes memory _bb = bytes(_b);
+		bytes memory _bc = bytes(_c);
+		string memory abc;
+		uint k = 0;
+		uint i;
+		bytes memory babc;
+		if (_ba.length==0)
+		{
+			abc = new string(_bc.length);
+			babc = bytes(abc);
+		}
+		else
+		{
+			abc = new string(_ba.length + _bb.length+ _bc.length);
+			babc = bytes(abc);
+			for (i = 0; i < _ba.length; i++) babc[k++] = _ba[i];
+			for (i = 0; i < _bb.length; i++) babc[k++] = _bb[i];
+		}
+        for (i = 0; i < _bc.length; i++) babc[k++] = _bc[i];
+		return string(babc);
+	}
+	
+	function timenow() public view returns(uint32) { return uint32(block.timestamp); }
+}
+
+contract CSLottery is ERC721, usingOraclize, Functional, Owned
+{
+	uint256 public feeLottery;
+	
+	enum Status {
+		NOTFOUND,		//0 game not created
+		PLAYING,		//1 buying tickets
+		PROCESSING,		//2 waiting for result
+		PAYING,	 		//3 redeeming
+		CANCELING		//4 canceling the game
+	}
+	
+	struct Game {
+		string  nameLottery;
+		uint32  countCombinations;
+		uint32  dateStopBuy;
+		uint32  minStake;				// per finney = 0.001E
+		uint32  winCombination;
+		uint256 betsSumIn;				// amount bets
+		uint256 feeValue;				// amount fee
+		Status status;					// status of game
+		bool isFreezing;
+	}
+	Game[] private game;
+	
+	struct Stake {
+		uint256 sum;		// amount bets
+		uint32 count;		// count bets 
+	}
+	mapping(uint32 => mapping (uint32 => Stake)) public betsAll; // ID-lottery => combination => Stake
+	mapping(bytes32 => uint32) private queryRes;  // ID-query => ID-lottery
+	
+	uint256 public ORACLIZE_GAS_LIMIT = 200000;
+	uint256 public ORACLIZE_GASPRICE_GWEY = 40; // 40Gwey
+
+	event LogEvent(string _event, string nameLottery, uint256 value);
+	event LogToken(string _event, address user, uint32 idLottery, uint32 idToken, uint32 combination, uint256 amount);
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
     }
 	
-	function getUserTokens(address user) public view returns ( string res ) 
+	modifier onlyAdmin {
+        require(msg.sender == owner || admins[msg.sender]);
+        _;
+    }
+
+	modifier onlyOraclize {
+        require (msg.sender == oraclize_cbAddress());
+        _;
+    }
+
+	function getLotteryByID(uint32 _id) public view returns (
+		string  nameLottery,
+		uint32 countCombinations,
+		uint32 dateStopBuy,
+		uint32 minStake,
+		uint32 winCombination,
+		uint32 betsCount,
+		uint256 betsSumIn,
+		uint256 feeValue,
+		Status status,
+		bool isFreezing
+	){
+		Game storage gm = game[_id];
+		nameLottery = gm.nameLottery;
+		countCombinations = gm.countCombinations;
+		dateStopBuy = gm.dateStopBuy;
+		minStake = gm.minStake;
+		winCombination = gm.winCombination;
+		betsCount = getCountTokensByLottery(_id);
+		betsSumIn = gm.betsSumIn;  
+		if (betsSumIn==0) betsSumIn = getSumInByLottery(_id);
+		feeValue = gm.feeValue;
+		status = gm.status;
+		if ( status == Status.PLAYING && timenow() > dateStopBuy ) status = Status.PROCESSING;
+		isFreezing = gm.isFreezing;
+	}
+	
+	function getCountTokensByLottery(uint32 idLottery) internal view returns (uint32)
+	{
+		Game storage curGame = game[idLottery];
+		uint32 count = 0;
+		for(uint32 i=1;i<=curGame.countCombinations;i++) count += betsAll[idLottery][i].count;
+		return count;
+	}
+	
+	function getSumInByLottery(uint32 idLottery) internal view returns (uint256)
+	{
+		Game storage curGame = game[idLottery];
+		uint256 sum = 0;
+		for(uint32 i=1;i<=curGame.countCombinations;i++) sum += betsAll[idLottery][i].sum;
+		return sum;
+	}
+	
+	function getTokenByID(uint256 _id) public view returns ( 
+			uint256 price,
+			uint256 payment,
+			uint32 combination,
+			uint32 dateBuy,
+			uint32 idLottery,
+			address ownerToken,
+			bool payout
+	){
+		Token storage tkn = tokens[_id];
+
+		price = tkn.price;
+		
+		uint256 packed = tkn.option;
+		payout = uint8((packed >> (12*8)) & 0xFF)==1?true:false;
+		idLottery   = uint32((packed >> (8*8)) & 0xFFFFFFFF);
+		combination = uint32((packed >> (4*8)) & 0xFFFFFFFF);
+		dateBuy     = uint32(packed & 0xFFFFFFFF);
+
+		payment = 0;
+		Game storage curGame = game[idLottery];
+		
+		uint256 betsSumIn = curGame.betsSumIn;  
+		if (betsSumIn==0) betsSumIn = getSumInByLottery(idLottery);
+
+		if (curGame.winCombination==combination) payment = betsSumIn * tkn.price / betsAll[idLottery][ curGame.winCombination ].sum;
+		if (curGame.status == Status.CANCELING) payment = tkn.price;
+		
+		ownerToken = tokenIndexToOwner[_id];
+	}
+
+	function getUserTokens(address user, uint32 count) public view returns ( string res ) 
 	{
 		res="";
 		require(user!=0x0);
-		for (uint256 i = 0; i < tokens.length; i++) 
+		uint32 findCount=0;
+		for (uint256 i = totalSupply-1; i >= 0; i--)
 		{
-			if (user == tokenIndexToOwner[i]) res = strConcat( res, uint2str(i), true );
+			if(i>totalSupply) break;
+			if (user == tokenIndexToOwner[i]) 
+			{
+				res = strConcat( res, ",", uint2str(i) );
+				findCount++;
+				if (count!=0 && findCount>=count) break;
+			}
 		}
-    }
-	/*
-	function getWinTokens() public view returns ( string res ) 
-	{
-		res="";
-		require(desc.winCombination!=0);
-		for (uint256 i = 0; i < tokens.length; i++) 
+	}
+
+	function getStatLotteries() public view returns ( 
+			uint32 countAll,
+			uint32 countPlaying,
+			uint32 countProcessing,
+			string listPlaying,
+			string listProcessing
+	){
+		countAll = uint32(game.length);
+		countPlaying = 0;
+		countProcessing = 0;
+		listPlaying="";
+		listProcessing="";
+		uint32 curtime = timenow();
+		for (uint32 i = 0; i < countAll; i++)
 		{
-			Token storage tkn = tokens[i];
-			if (desc.winCombination==tkn.combination) res = strConcat( res, uint2str(i), true );
+			if (game[i].status!=Status.PLAYING) continue;
+			if (curtime <  game[i].dateStopBuy) { countPlaying++; listPlaying = strConcat( listPlaying, ",", uint2str(i) ); }
+			if (curtime >= game[i].dateStopBuy) { countProcessing++; listProcessing = strConcat( listProcessing, ",", uint2str(i) ); }
 		}
-    }
-	*/
-	
-	enum Status 
+		
+	}
+
+	function CSLottery() public 
 	{
-		CREATING,		//0 создание
-		PLAYING,		//1 покупка билетов
-		PROCESSING,		//2 ожидание результата
-        PAYING,	 		//3 выдача выигрыша
-		CANCELING		//4 аннулирование игры
-    }
-	
-	struct Description {
-		string  nameLottery;			// название игры
-		uint256 countCombinations;		// количество комбинаций ставок в игре
-		uint256 maxCountStakePerComb;	// максимальное количество ставок на каждую комбинацию
-		uint256 dateStopBuy;			// стоп продаж
-		uint256 minStake;				// минимальная ставка
-		uint256 fee;					// %комисси€ за пользование контрактом
-		uint256 betsSumIn;				// сумма всех поставленных ставок всех комбинаций
-		uint256 betsSumOut;				// сумма розданных призов
-		uint256 winCombination;			// выигрышная комбинация
-		uint256 lotteryID;				// идентификатор игры дл€ Oraclize
 	}
-	
-	Status private status;
-	Description public desc;
-	
-	struct Stake {
-		uint256 sum;		// поставленная сумма на данную комбинацию всех игроков
-		uint256 count;		// кол-во ставок данной комбинации
-	}
-	mapping(uint256 => Stake) public betsAll;	// комбинация_ставки->[сумма_ставки,кол-во]
 
-	uint256 private constant ORACLIZE_GAS_LIMIT = 200000;
-	
-	event LogInitGame( string _nameLottery, address gameaddress,  uint256 lotteryId );
-	event LogBuyToken(address user, uint256 combination, uint256 userStake, uint256 tokenId);
-	event LogSendMoney(string what, address user, uint256 value);
-	event LogResolveLottery( string what, uint256 winCombination );
-	event LogOraclize( string msg, uint256 value );
-	
-	address public owner;
-	address public ownerReserve;
-	address public feeAddress;
-
-	modifier onlyOwner {
-        require(msg.sender == owner || msg.sender == ownerReserve);
-        _;
-    }
-	
-	modifier onlyPlayer {
-        require(msg.sender != owner && msg.sender != ownerReserve);
-        _;
-    }
-
-	function getStatus() public view returns ( Status )
+	function setOraclizeGasPrice(uint256 priceGwey, uint256 limit) onlyAdmin public
 	{
-		Status tmp = status;
-		if ( tmp == Status.PLAYING && timenow() > desc.dateStopBuy ) tmp = Status.PROCESSING;
-        return tmp;
+		ORACLIZE_GASPRICE_GWEY = priceGwey;
+		ORACLIZE_GAS_LIMIT = limit;
+		oraclize_setCustomGasPrice( uint256(ORACLIZE_GASPRICE_GWEY) * 10**9 );
 	}
-	
-	function SimpleLottery() public 
+
+	function freezeLottery(uint32 idLottery, bool freeze) public onlyAdmin 
 	{ 
-		owner 		 = msg.sender;
-		ownerReserve = 0x0d8c9D5FB5301Ce26D67e2A7B345580A89917742;
-		feeAddress   = 0x230C9a8F235d88bbc8f9b589E17B4A4aDbB286FC;
-
-		status = Status.CREATING;
+		Game storage curGame = game[idLottery];
+		require( curGame.isFreezing != freeze );
+		curGame.isFreezing = freeze; 
 	}
 
-	function initLottery( 	string _nameLottery, uint256 _dateStopBuy,
-							uint256 _countCombinations, uint256 _maxCountStakePerCombination,
-							uint256 _minStakeFinney
-						) onlyOwner public {
-
-		require( status == Status.CREATING );
-
-		require( _countCombinations > 0 );
-		require( _maxCountStakePerCombination > 0 );
+	function addLottery( string _nameLottery, uint32 _dateStopBuy, uint32 _countCombinations, uint32 _minStakeFinney ) onlyAdmin public 
+	{
+		require( bytes(_nameLottery).length > 2 );
+		require( _countCombinations > 1 );
+		require( _minStakeFinney > 0 );
 		require( _dateStopBuy > timenow() );
 
-		desc.nameLottery = _nameLottery;
-		desc.countCombinations = _countCombinations;
-		desc.maxCountStakePerComb = _maxCountStakePerCombination;
-		desc.dateStopBuy = _dateStopBuy;
-		desc.lotteryID = block.number;
+		Game memory _game;
+		_game.nameLottery = _nameLottery;
+		_game.countCombinations = _countCombinations;
+		_game.dateStopBuy = _dateStopBuy;
+		_game.minStake 	= _minStakeFinney;
+		_game.status = Status.PLAYING;
+
+		uint256 newGameId = game.push(_game) - 1;
 		
-		desc.betsSumIn = 0;
-		desc.betsSumOut = 0;
-		desc.winCombination = 0;
-		
-		desc.minStake 	= _minStakeFinney * 1 finney;
-		desc.fee		= 4;
-		
-		status = Status.PLAYING;
-		
-		LogInitGame( _nameLottery, this, desc.lotteryID );
+		LogEvent( "AddGame", _nameLottery, newGameId );
 	}
-	
-	function timenow() public view returns(uint256) { return block.timestamp; }
-//	function freezeLottery() public onlyOwner { isFreezing = true; }
-//	function unfreezeLottery() public onlyOwner { isFreezing = false; }
+
 	function () payable public { require (msg.value == 0x0); }
 	
-
-	function buyToken(uint256 combination, address captainAddress) payable public
+	function buyToken(uint32 idLottery, uint32 combination, address captainAddress) payable public
 	{
-		require( status == Status.PLAYING );
-		require( timenow() < desc.dateStopBuy );
-		require( combination <= desc.countCombinations );
-		require( combination != 0 );
+		Game storage curGame = game[idLottery];
+		require( curGame.status == Status.PLAYING );
+		require( timenow() < curGame.dateStopBuy );
+		require( combination > 0 && combination <= curGame.countCombinations );
 		require( captainAddress != msg.sender );
+		require( curGame.isFreezing == false );
 		
-		// проверить хватает ли денег на ставку
-		require( msg.value >= desc.minStake );
-		
-		// проверить не вышли за предел кол-ва ставок
-		require( betsAll[combination].count < desc.maxCountStakePerComb );
+		// check money for stake
+		require( msg.value >= curGame.minStake * 1 finney );
 		
 		uint256 userStake = msg.value;
-		uint256 feeValue = userStake * desc.fee / 100;	// комиссия контракту
-		uint256 captainValue = userStake * 1 / 100;		// бонус капитану = 1%
-		
+		uint256 feeValue = userStake * 5 / 100;		// 5% fee for contract
 		userStake = userStake - feeValue;
-		if (captainAddress!=0x0) userStake = userStake - captainValue;
 		
-		// увеличиваю сумму ставок
-		desc.betsSumIn = desc.betsSumIn + userStake;
-		betsAll[combination].sum += userStake;
-		
-		// уменьшаю кол-во свободных билетов
-		betsAll[combination].count += 1;
-		
-		Token memory _token = Token({
-			price: userStake,
-			combination: combination,
-			payout : false,
-			payment : 0,
-			dateBuy : timenow()
-		});
-
-		uint256 newTokenId = tokens.push(_token) - 1;
-		_transfer(0, msg.sender, newTokenId);
-		
-		LogBuyToken( msg.sender, combination, userStake, newTokenId );
-
-		// забираем комиссию
-//		feeAddress.transfer(feeValue); 
-		assert(feeAddress.send(feeValue));
-		LogSendMoney( "FEECONTRACT", feeAddress, feeValue );
-		
-		// отправляем бонус
 		if (captainAddress!=0x0) 
 		{
-			assert(captainAddress.send(captainValue));
-			LogSendMoney( "CAPTAIN", captainAddress, captainValue );
+			uint256 captainValue = feeValue * 20 / 100;		// bonus for captain = 1%
+			feeValue = feeValue - captainValue;
+			require(feeValue + captainValue + userStake == msg.value);
+			captainAddress.transfer(captainValue);
 		}
+
+		curGame.feeValue  = curGame.feeValue + feeValue;
+		betsAll[idLottery][combination].sum += userStake;
+		betsAll[idLottery][combination].count += 1;
+
+		uint128 packed;
+		packed = ( uint128(idLottery) << 8*8 ) + ( uint128(combination) << 4*8 ) + uint128(block.timestamp);
+
+		Token memory _token = Token({
+			price: userStake,
+			option : packed
+		});
+
+		uint256 newTokenId = totalSupply++;
+		tokens[newTokenId] = _token;
+		_transfer(0, msg.sender, newTokenId);
+		LogToken( "Buy", msg.sender, idLottery, uint32(newTokenId), combination, userStake);
 	}
 	
-	/*
-	// лотерея отменена - возврат стоимости билета
-	function returnToken(uint256 _tokenId) onlyPlayer public 
-	{
-		require( status == Status.CANCELING );
-		require( msg.sender == tokenIndexToOwner[_tokenId] );	// хозяин текущий
-		require( tokens[_tokenId].payout == false ); // еще не выплачен
-			
-		uint256 sumPayment = tokens[_tokenId].price;
-			
-		// обнуляю текущий токен
-		tokens[_tokenId].payout = true;
-		tokens[_tokenId].payment = sumPayment;
-		
-		desc.betsSumOut += sumPayment;
-		
-		// отправляю деньги отправителю
-		msg.sender.transfer(sumPayment);
-		LogSendMoney( "RETURN", msg.sender, sumPayment );
-	}
-		
-
-	// выплата приза
-	function claimPrize(uint256 _tokenId) onlyPlayer public 
-	{
-		require( status == Status.PAYING );
-
-		require( msg.sender == tokenIndexToOwner[_tokenId] );	// хозяин текущий
-		require( tokens[_tokenId].combination == desc.winCombination ); // Есть выигрышный токен		
-		require( tokens[_tokenId].payout == false ); // еще не выплачен
-
-		// вычисляю цену выигрыша
-		uint256 sumPayment = desc.betsSumIn * tokens[_tokenId].price / betsAll[desc.winCombination].sum;
-
-		// обнуляю текущий токен
-		tokens[_tokenId].payout = true;
-		tokens[_tokenId].payment = sumPayment;
-	
-		desc.betsSumOut += sumPayment;
-		
-		// отправляю деньги отправителю
-		msg.sender.transfer(sumPayment); 
-		LogSendMoney( "PRIZE", msg.sender, sumPayment );
-	}
-	*/
-
-	// обналичивание токена
+	// take win money or money for canceling lottery
 	function redeemToken(uint256 _tokenId) public 
 	{
-		require( status == Status.PAYING || status == Status.CANCELING);
+		Token storage tkn = tokens[_tokenId];
 
-		require( msg.sender == tokenIndexToOwner[_tokenId] );	// хозяин текущий
-		require( tokens[_tokenId].payout == false ); // еще не выплачен
-		require( tokens[_tokenId].combination == desc.winCombination || status == Status.CANCELING ); // Есть выигрышный токен		
+		uint256 packed = tkn.option;
+		bool payout = uint8((packed >> (12*8)) & 0xFF)==1?true:false;
+		uint32 idLottery = uint32((packed >> (8*8)) & 0xFFFFFFFF);
+		uint32 combination = uint32((packed >> (4*8)) & 0xFFFFFFFF);
+
+		Game storage curGame = game[idLottery];
+		
+		require( curGame.status == Status.PAYING || curGame.status == Status.CANCELING);
+
+		require( msg.sender == tokenIndexToOwner[_tokenId] );	// only onwer`s token
+		require( payout == false ); // has not paid
+		require( combination == curGame.winCombination || curGame.status == Status.CANCELING );
 
 		uint256 sumPayment = 0;
-		if ( status == Status.CANCELING ) sumPayment = tokens[_tokenId].price;
-		if ( status == Status.PAYING ) sumPayment = desc.betsSumIn * tokens[_tokenId].price / betsAll[desc.winCombination].sum;
+		if ( curGame.status == Status.CANCELING ) sumPayment = tkn.price;
+		if ( curGame.status == Status.PAYING ) sumPayment = curGame.betsSumIn * tkn.price / betsAll[idLottery][curGame.winCombination].sum;
 
-		tokens[_tokenId].payout = true;
-		tokens[_tokenId].payment = sumPayment;
+		payout = true;
+		packed += uint128(payout?1:0) << 12*8;
+		tkn.option = packed;
 	
-		desc.betsSumOut += sumPayment;
+		msg.sender.transfer(sumPayment);
 		
-		// отправляю деньги владельцу токена
-//		msg.sender.transfer(sumPayment); 
-		assert(msg.sender.send(sumPayment));
-		
-		LogSendMoney( "REDEEMTOKEN", msg.sender, sumPayment );
+		LogToken( "Redeem", msg.sender, idLottery, uint32(_tokenId), combination, sumPayment);
 	}
 	
-	function emergencyCancelLottery() public 
+	function cancelLottery(uint32 idLottery) public 
 	{
-		require( status == Status.PLAYING );
-		require( timenow() > desc.dateStopBuy + 7 * 24*60*60 ); // after 7 days
-		status = Status.CANCELING;
-	}
-	
-	function cancelLottery() onlyOwner public 
-	{
-		require( status == Status.PLAYING );
-		status = Status.CANCELING;
-	}
-
-	function __callback(bytes32, string _result) public
-	{
-		require( status == Status.PLAYING );
-		require( timenow() > desc.dateStopBuy );
-        require (msg.sender == oraclize_cbAddress());
-
-        desc.winCombination = parseInt(_result);
-		if ( desc.winCombination > desc.countCombinations ) desc.winCombination = 0;
-
-		LogResolveLottery( "Oraclize", desc.winCombination  );
-    }
-
-    function resolveLotteryByOraclize() onlyOwner public payable
-	{
-		uint oraclizeFee = oraclize_getPrice("URL", ORACLIZE_GAS_LIMIT );
-        require(oraclizeFee < msg.value);
+		Game storage curGame = game[idLottery];
 		
-        LogOraclize("Oraclize query was sent, waiting for the answer..", desc.lotteryID );
+		require( curGame.status == Status.PLAYING );
+		// only owner/admin or anybody after 7 days
+		require( msg.sender == owner || admins[msg.sender] || timenow() > curGame.dateStopBuy + 7 * 24*60*60 );
+
+		curGame.status = Status.CANCELING;
+
+		LogEvent( "CancelLottery", curGame.nameLottery, idLottery );
+		
+		takeFee(idLottery);
+	}
+
+	function __callback(bytes32 queryId, string _result) onlyOraclize public
+	{
+		uint32 idLottery = queryRes[queryId];
+		require( idLottery != 0 );
+
+		Game storage curGame = game[idLottery];
+		
+		require( curGame.status == Status.PLAYING );
+		require( timenow() > curGame.dateStopBuy );
+		
+		uint32 tmpCombination = uint32(parseInt(_result,0));
+		
+		string memory error = "callback";
+		if ( tmpCombination==0 ) error = "callback_result_not_found";
+		if ( tmpCombination > curGame.countCombinations ) { tmpCombination = 0; error = "callback_result_limit"; }
+
+		LogEvent( error, curGame.nameLottery, tmpCombination );
+
+		if (tmpCombination!=0) 
+		{
+			curGame.winCombination = tmpCombination;
+			checkWinNobody(idLottery);
+		}
+	}
+
+	function resolveLotteryByOraclize(uint32 idLottery, uint32 delaySec) onlyAdmin public payable
+	{
+		Game storage curGame = game[idLottery];
+		
+		uint oraclizeFee = oraclize_getPrice( "URL", ORACLIZE_GAS_LIMIT );
+		require(msg.value + curGame.feeValue > oraclizeFee); // if contract has not enought money to do query
+		
+		curGame.feeValue = curGame.feeValue + msg.value - oraclizeFee;
+
+		LogEvent( "ResolveLotteryByOraclize", curGame.nameLottery, delaySec );
 		
 		string memory tmpQuery;
-		tmpQuery = strConcat( "json(http://cryptosportz.com/api/v1/game/", uint2str(desc.lotteryID), false );
-		tmpQuery = strConcat( tmpQuery, "/result).result", false );
+		tmpQuery = strConcat( "json(https://cryptosportz.com/api/v2/game/", uint2str(idLottery), "/result).result" );
 	
-		oraclize_query("URL", tmpQuery, ORACLIZE_GAS_LIMIT);
-    }
+		uint32 delay;
+		if ( timenow() < curGame.dateStopBuy ) delay = curGame.dateStopBuy - timenow() + delaySec;
+										  else delay = delaySec;
+	
+		bytes32 queryId = oraclize_query(delay, "URL", tmpQuery, ORACLIZE_GAS_LIMIT);
+		queryRes[queryId] = idLottery;
+	}
 
-	function resolveLotteryByHand( uint256 combination ) onlyOwner public 
+	function resolveLotteryByHand(uint32 idLottery, uint32 combination) onlyAdmin public 
 	{
-		require( status == Status.PLAYING );
-		require( combination <= desc.countCombinations );
+		Game storage curGame = game[idLottery];
+		
+		require( curGame.status == Status.PLAYING );
+		require( combination <= curGame.countCombinations );
 		require( combination != 0 );
-		
-		// возможность запуска через час, если не получилось через Oraclize
-		require( timenow() > desc.dateStopBuy + 1*60*60 );
 
-		// решение лотереи
-		desc.winCombination = combination;
+		require( timenow() > curGame.dateStopBuy + 2*60*60 );
+
+		curGame.winCombination = combination;
 		
-		LogResolveLottery( "Owner", desc.winCombination );
+		LogEvent( "ResolveLotteryByHand", curGame.nameLottery, curGame.winCombination );
+		
+		checkWinNobody(idLottery);
 	}
 	
-	function finalizeLottery() onlyOwner public 
+	function checkWinNobody(uint32 idLottery) internal
 	{
-		require( timenow() > desc.dateStopBuy );
-		require( status == Status.PLAYING );
-		require( desc.winCombination != 0 );
-
-		status = Status.PAYING;
+		Game storage curGame = game[idLottery];
 		
-		// никто не выиграл 
-		if ( betsAll[desc.winCombination].count == 0 )
+		curGame.status = Status.PAYING;
+		curGame.betsSumIn = getSumInByLottery(idLottery);
+		
+		// nobody win = send all to feeLottery
+		if ( betsAll[idLottery][curGame.winCombination].count == 0 )
 		{
-			LogSendMoney( "NOBODYWIN", feeAddress, this.balance );
-			desc.betsSumOut += this.balance;
-			//feeAddress.transfer(this.balance);
-			assert(feeAddress.send(this.balance));
+			if (curGame.betsSumIn+curGame.feeValue!=0) feeLottery = feeLottery + curGame.betsSumIn + curGame.feeValue;
+			LogEvent( "NOBODYWIN", curGame.nameLottery, curGame.betsSumIn+curGame.feeValue );
+		}
+		else 
+			takeFee(idLottery);
+	}
+	
+	function takeFee(uint32 idLottery) internal
+	{
+		Game storage curGame = game[idLottery];
+		
+		// take fee
+		if ( curGame.feeValue > 0 )
+		{
+			feeLottery = feeLottery + curGame.feeValue;
+			LogEvent( "TakeFee", curGame.nameLottery, curGame.feeValue );
 		}
 	}
 	
-}
-
-contract Lotterres is owned
-{
-	uint256 public countGames = 0;
-	mapping (uint256 => SimpleLottery) public games;
-	
-	function Lotterres() public {}
-	
-	function addGame() public onlyOwner 
+	function withdraw() onlyOwner public
 	{
-		games[countGames++] = new SimpleLottery();
+		require( feeLottery > 0 );
+
+		uint256 tmpFeeLottery = feeLottery;
+		feeLottery = 0;
+		
+		owner.transfer(tmpFeeLottery);
+		LogEvent( "WITHDRAW", "", tmpFeeLottery);
 	}
-	
+
 }
